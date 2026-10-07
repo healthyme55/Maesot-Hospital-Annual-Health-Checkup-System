@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจองคิวตรวจสุขภาพ</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0d9488;      
+            --primary-light: #ccfbf1; 
+            --accent: #0284c7;       
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+            --bg-card: #ffffff;
+            --success: #0d9488;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Sarabun', sans-serif; }
+        
+        body {
+            background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+            color: var(--text-main);
+            padding: 16px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 520px;
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(13, 148, 136, 0.1);
+            border-top: 6px solid var(--primary);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header-banner {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .hospital-badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin-bottom: 6px;
+        }
+        .main-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 16px;
+        }
+        .modal-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease-in-out;
+            text-align: center;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-header {
+            margin-bottom: 12px;
+        }
+        .modal-header h3 {
+            font-size: 18px;
+            color: var(--primary);
+            font-weight: 700;
+            margin-top: 6px;
+        }
+        .modal-body {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            overflow-y: auto;
+            max-height: 45vh;
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 12px;
+            background: #f8fafc;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+        .modal-body p { margin-bottom: 8px; }
+        
+        .scroll-hint {
+            font-size: 11px;
+            color: var(--danger);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        /* ปุ่มเลือกประเภทการตรวจใน Modal */
+        .type-select-btn {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            background: #fff;
+            color: var(--text-main);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .type-select-btn:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+            flex: 1;
+        }
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 6px;
+            transition: 0.3s;
+        }
+        .step.active .step-circle {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 0 10px rgba(13, 148, 136, 0.3);
+        }
+        .step.completed .step-circle {
+            background: var(--accent);
+            color: white;
+        }
+        .step-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .step.active .step-label {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .step-content { display: none; width: 100%; }
+        .step-content.active { display: block; }
+
+        h2 { font-size: 20px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+        p.subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+
+        .calendar-box {
+            border: 1.5px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            background: #f8fafc;
+            margin-bottom: 16px;
+            width: 100%;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 4px;
+        }
+        .calendar-header select {
+            padding: 6px 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+            background: #fff;
+            outline: none;
+            flex: 1;
+        }
+        .calendar-header button {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            padding: 6px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+        }
+        .calendar-day-name { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+        .calendar-date {
+            padding: 8px 0;
+            font-size: 13px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+        .calendar-date.available {
+            background: #ffffff;
+            color: var(--text-main);
+            border: 1.5px solid var(--border-color);
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .calendar-date.available:hover { border-color: var(--primary); background: var(--primary-light); }
+        .calendar-date.warning-date { border-color: var(--warning); background: #fffbeb; }
+        .calendar-date.selected { background: var(--primary) !important; color: white !important; font-weight: 700 !important; border-color: var(--primary) !important; }
+        .calendar-date.full { background: #fee2e2; color: var(--danger); text-decoration: line-through; }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            justify-content: center;
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        .filter-section {
+            border: 1.5px solid var(--border-color);
+            border-radius: 14px;
+            padding: 12px;
+            background: #f8fafc;
+            margin-bottom: 12px;
+            width: 100%;
+        }
+        .filter-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            width: 100%;
+        }
+        .filter-row:last-child { margin-bottom: 0; }
+        .filter-row label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+            margin-bottom: 0;
+            min-width: 55px;
+        }
+        .filter-row input {
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border-color);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--primary);
+            background: #f1f5f9;
+            outline: none;
+            width: 100%;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .date-status-list { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            margin-bottom: 20px; 
+            max-height: 200px; 
+            overflow-y: auto; 
+            scroll-behavior: smooth; 
+            width: 100%; 
+        }
+        .date-status-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 13px;
+            background: #f8fafc;
+            pointer-events: none;
+            transition: all 0.2s ease;
+            width: 100%;
+        }
+        .date-status-card.highlighted {
+            border: 2px solid var(--primary) !important;
+            background: var(--primary-light) !important;
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.25);
+            font-weight: 700;
+            width: 100%;
+        }
+
+        .form-group { margin-bottom: 16px; width: 100%; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: var(--text-main); }
+        input, select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            background: #fff;
+            color: var(--text-main);
+        }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 16px;
+            margin-top: 6px;
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: normal;
+        }
+        input[type="radio"], input[type="checkbox"] { accent-color: var(--primary); width: 18px; height: 18px; }
+
+        .note-box {
+            background: #f0fdf4;
+            border-left: 5px solid var(--primary);
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #047857;
+            margin-bottom: 20px;
+            line-height: 1.6;
+            white-space: normal;
+            word-break: break-word;
+            width: 100%;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 13px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .summary-card {
+            background: #f8fafc;
+            border: 1.5px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .summary-item span:first-child { color: var(--text-muted); }
+        .summary-item span:last-child { font-weight: 600; color: var(--text-main); text-align: right; }
+
+        .btn-container { display: flex; gap: 10px; width: 100%; }
+        button.btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3); font-weight: 700; width: 100%; }
+        .btn-primary:hover { background: #0f766e; }
+        .btn-primary:disabled { background: #cbd5e1; cursor: not-allowed; box-shadow: none; }
+        .btn-secondary { background: #f1f5f9; color: var(--text-main); }
+        .btn-secondary:hover { background: #e2e8f0; }
+
+        .success-box { text-align: center; padding: 20px 0; }
+        .success-icon { width: 60px; height: 60px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; margin: 0 auto 16px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<!-- Popup เลือกประเภทการตรวจ -->
+<div class="modal-overlay" id="selectTypeModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <h3>กรุณาเลือกประเภทการตรวจสุขภาพ</h3>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">โปรดเลือกบริการที่คุณต้องการเข้ารับการตรวจ</p>
+        
+        <button type="button" class="type-select-btn" onclick="chooseExamType('ตรวจสุขภาพประจำปี')">
+            🏥 ตรวจสุขภาพประจำปี
+        </button>
+        <button type="button" class="type-select-btn" onclick="chooseExamType('ตรวจสุขภาพก่อนเข้าทำงาน')">
+            💼 ตรวจสุขภาพก่อนเข้าทำงาน
+        </button>
+    </div>
+</div>
+
+<!-- Popup กรอกชื่อหน่วยงานและแผนก (สำหรับตรวจสุขภาพก่อนเข้าทำงาน) -->
+<div class="modal-overlay" id="companyModal" style="display: none;">
+    <div class="modal-card" style="text-align: left;">
+        <div class="modal-header" style="text-align: center;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            <h3>ข้อมูลหน่วยงาน / สถานประกอบการ</h3>
+        </div>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px; text-align: center;">กรุณากรอกชื่อหน่วยงานและแผนกของท่าน</p>
+        
+        <div class="form-group">
+            <label>ชื่อหน่วยงาน / บริษัท *</label>
+            <input type="text" id="inputCompany" placeholder="เช่น บริษัท เอ็กซ์วายแซด จำกัด" required>
+        </div>
+        
+        <div class="form-group">
+            <label>แผนก *</label>
+            <input type="text" id="inputDepartment" placeholder="เช่น แผนกผลิต, แผนกบัญชี" required>
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="submitCompanyInfo()" style="margin-top: 8px;">ถัดไป</button>
+    </div>
+</div>
+
+<!-- PDPA Modal Popup -->
+<div class="modal-overlay" id="pdpaModal" style="display: none;">
+    <div class="modal-card" style="text-align: left;">
+        <div class="modal-header" style="text-align: center;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <h3>นโยบายการคุ้มครองข้อมูลส่วนบุคคล<br>โรงพยาบาลแม่สอด</h3>
+        </div>
+        <div class="modal-body" id="pdpaBody" onscroll="checkScrollBottom()">
+            <p>ตามที่พระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 และนโยบายคุ้มครองข้อมูลส่วนบุคคล กระทรวงสาธารณสุข ลงวันที่ 25 พฤษภาคม พ.ศ. 2565 ได้กำหนดมาตรการในการคุ้มครองข้อมูลส่วนบุคคล เพื่อให้การดำเนินการคุ้มครองข้อมูลส่วนบุคคลของโรงพยาบาลแม่สอดเป็นไปอย่างมีประสิทธิภาพ สามารถปฏิบัติได้อย่างเป็นรูปธรรม โรงพยาบาลแม่สอดจึงกำหนดนโยบายการคุ้มครองข้อมูลส่วนบุคคลไว้ดังต่อไปนี้</p>
+            <p><strong>ข้อ 1.</strong> ประกาศนี้เรียกว่า "ประกาศโรงพยาบาลแม่สอด เรื่อง นโยบายการคุ้มครองข้อมูลส่วนบุคคล โรงพยาบาลแม่สอด"</p>
+            <p><strong>ข้อ 2.</strong> ประกาศนี้ให้ใช้บังคับตั้งแต่บัดนี้ เป็นต้นไป</p>
+            <p><strong>ข้อ 3.</strong> นโยบายการคุ้มครองข้อมูลส่วนบุคคล โรงพยาบาลแม่สอด มีขอบเขตการบังคับใช้ดังต่อไปนี้</p>
+            <p><strong>"กระทรวงสาธารณสุข"</strong> หมายถึง หน่วยงานที่มีฐานะเป็นผู้ควบคุมข้อมูลส่วนบุคคลภายใต้การบังคับบัญชา ของปลัดกระทรวงสาธารณสุข ประกอบด้วย หน่วยงานระดับกรมและเทียบกรมและมีผลบังคับใช้กับข้าราชการ พนักงาน ผู้ปฏิบัติงาน และบุคคลภายนอกผู้ซึ่งปฏิบัติงานกระทรวงสาธารณสุข</p>
+            <p><strong>"โรงพยาบาลแม่สอด"</strong> หมายถึง โรงพยาบาลทั่วไปที่เป็นหน่วยบริการสุขภาพส่วนภูมิภาคภายใต้สังกัด สำนักงานปลัดกระทรวงสาธารณสุข ที่มีฐานะเป็นผู้ควบคุมข้อมูลส่วนบุคคลภายใต้การบังคับบัญชาของ ปลัดกระทรวงสาธารณสุข และผู้อำนวยการโรงพยาบาลแม่สอด ที่มีผลบังคับกับข้าราชการ พนักงาน ผู้ปฏิบัติงาน และบุคคลภายนอกผู้ซึ่งปฏิบัติงานให้โรงพยาบาลแม่สอด</p>
+            <p><strong>ข้อ 4.</strong> โรงพยาบาลแม่สอด จะเก็บรวบรวมข้อมูลส่วนบุคคล "เท่าที่จำเป็น" ตามภารกิจของโรงพยาบาลแม่สอด</p>
+            <p><strong>ข้อ 5.</strong> โรงพยาบาลแม่สอด จะเก็บรวบรวมใช้ และเปิดเผยข้อมูลส่วนบุคคลตามวัตถุประสงค์ในการดำเนินงาน ภายใต้อำนาจหน้าที่ของโรงพยาบาลแม่สอด</p>
+            <p><strong>ข้อ 6.</strong> การกำกับดูแล การเก็บรวบรวมใช้และการเปิดเผยข้อมูลส่วนบุคคล โรงพยาบาลแม่สอด จะกำกับดูแลให้ผู้ที่มีหน้าที่หรือไม่ได้มอบหมายเก็บรวบรวมข้อมูลส่วนบุคคล นำไปใช้ประโยชน์ เปิดเผย แสดง หรือทำให้ปรากฏในลักษณะอื่นใดแก่บุคคลอื่นนอกเหนือวัตถุประสงค์ก็ได้ แต่อย่างเปิดเผยข้อมูลส่วนบุคคลภายใต้หลักเกณฑ์ที่กฎหมายกำหนด</p>
+            <p><strong>ข้อ 7.</strong> การรักษาความมั่นคงปลอดภัยของข้อมูลส่วนบุคคล โรงพยาบาลแม่สอด จะกำหนดมาตรการในการรักษาความมั่นคงปลอดภัยของข้อมูลส่วนบุคคล อย่างเหมาะสมเป็นไปตามมาตรฐานและข้อกำหนดที่เกี่ยวข้อง และจะดำเนินการลบหรือทำลายข้อมูลส่วนบุคคล เมื่อพ้นกำหนดระยะเวลาการเก็บหรือหมดความจำเป็น</p>
+            <p><strong>ข้อ 8.</strong> สิทธิและการมีส่วนร่วมของเจ้าของข้อมูลส่วนบุคคล เจ้าของข้อมูลส่วนบุคคล มีสิทธิในการดำเนินการกับข้อมูลส่วนบุคคลของตนเองที่โรงพยาบาลแม่สอด ได้แก่ สิทธิดูแล สิทธิขอรับข้อมูล สิทธิในการคัดค้าน สิทธิขอให้ลบ สิทธิขอให้ระงับการใช้สิทธิขอให้แก้ไข เปลี่ยนแปลง ข้อมูลส่วนบุคคล ตามหลักเกณฑ์ที่กฎหมายกำหนด</p>
+        </div>
+        <div class="scroll-hint" id="scrollHint">👇 กรุณาเลื่อนอ่านเนื้อหาให้จนถึงข้อสุดท้ายก่อน</div>
+        <div style="margin-bottom: 12px;">
+            <label class="radio-label" id="checkboxLabel" style="font-size: 13px; font-weight: 600; cursor: not-allowed; display: flex; align-items: center; gap: 8px; color: var(--text-muted);">
+                <input type="checkbox" id="pdpaCheckbox" disabled onchange="togglePdpaBtn()" style="width: 18px; height: 18px; cursor: not-allowed;">
+                ฉันยอมรับเงื่อนไขและข้อตกลง
+            </label>
+        </div>
+        <button type="button" class="btn btn-primary" id="pdpaBtn" disabled onclick="closePdpaModal()">ยอมรับและดำเนินการต่อ</button>
+    </div>
+</div>
+
+<!-- Duplicate Modal Popup -->
+<div class="modal-overlay" id="duplicateModal" style="display: none;">
+    <div class="modal-card">
+        <div class="modal-header">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <h3 style="color: var(--danger); margin-top: 10px;" id="duplicateTitle">คุณได้ทำการจองคิวแล้ว</h3>
+        </div>
+        <div style="font-size: 14px; color: var(--text-main); margin-bottom: 20px; line-height: 1.6;" id="duplicateDesc">
+            หากต้องการแก้ไข กรุณาติดต่อเจ้าหน้าที่<br>
+            ทางไลน์ <strong style="color: var(--primary);">@813chbxc</strong> หรือ เบอร์โทรศัพท์ <strong style="color: var(--primary);">062-310-7162</strong> (ติดต่อในเวลาราชการ)
+        </div>
+        <button type="button" class="btn btn-primary" onclick="closeDuplicateModal()">รับทราบ</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header-banner">
+        <div class="hospital-badge">โรงพยาบาลแม่สอด</div>
+        <h1 class="main-title" id="displayMainTitle">ตรวจสุขภาพประจำปี</h1>
+    </div>
+
+    <div class="stepper">
+        <div class="step active" id="stepIndicator1">
+            <div class="step-circle">1</div>
+            <div class="step-label">กรอกข้อมูล</div>
+        </div>
+        <div class="step" id="stepIndicator2">
+            <div class="step-circle">2</div>
+            <div class="step-label">เลือกวัน</div>
+        </div>
+        <div class="step" id="stepIndicator3">
+            <div class="step-circle">3</div>
+            <div class="step-label">ยืนยัน</div>
+        </div>
+    </div>
+
+    <!-- Step 1: กรอกข้อมูลส่วนบุคคล -->
+    <div class="step-content active" id="step1">
+        <h2>ข้อมูลส่วนบุคคล</h2>
+        <p class="subtitle">กรอกข้อมูลให้ครบถ้วนเพื่อความรวดเร็วในการเข้ารับบริการ</p>
+
+        <form id="bookingForm">
+            <div class="form-group" id="companyGroup" style="display: none;">
+                <label>ชื่อหน่วยงาน / บริษัท</label>
+                <input type="text" id="displayCompany" readonly style="background: #f1f5f9; cursor: default;">
+            </div>
+
+            <div class="form-group" id="departmentGroup" style="display: none;">
+                <label>แผนก</label>
+                <input type="text" id="displayDepartment" readonly style="background: #f1f5f9; cursor: default;">
+            </div>
+
+            <div class="form-group">
+                <label>คำนำหน้า *</label>
+                <div class="radio-group">
+                    <label class="radio-label"><input type="radio" name="prefix" value="นาย" required> นาย</label>
+                    <label class="radio-label"><input type="radio" name="prefix" value="นาง"> นาง</label>
+                    <label class="radio-label"><input type="radio" name="prefix" value="นางสาว"> นางสาว</label>
+                    <label class="radio-label"><input type="radio" name="prefix" value="Mr."> Mr.</label>
+                    <label class="radio-label"><input type="radio" name="prefix" value="Mrs."> Mrs.</label>
+                    <label class="radio-label"><input type="radio" name="prefix" value="Ms."> Ms.</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>ชื่อ - นามสกุล *</label>
+                <input type="text" id="fullname" placeholder="เช่น สมชาย ใจดี" required oninput="this.value = this.value.replace(/[^ก-์a-zA-Z\s]/g, '')">
+            </div>
+
+            <div class="form-group">
+                <label>เลขบัตรประจำตัวประชาชน *</label>
+                <input type="text" id="idcard" maxlength="13" placeholder="กรอกเลข 13 หลัก" required oninput="checkIdCardInput(this)">
+            </div>
+
+            <div class="form-group">
+                <label>เบอร์โทรศัพท์มือถือ *</label>
+                <input type="tel" id="phone" maxlength="10" placeholder="กรอกเบอร์ 10 หลัก (ขึ้นต้นด้วย 0)" required oninput="checkPhoneInput(this)">
+            </div>
+
+            <div class="form-group">
+                <label>สิทธิ *</label>
+                <select id="privilege" required>
+                    <option value="">กรุณาเลือกสิทธิ์</option>
+                    <option value="เบิกหน่วยงานต้นสังกัด(ตรวจสุขภาพ)">เบิกหน่วยงานต้นสังกัด(ตรวจสุขภาพ)</option>
+                    <option value="เบิกได้รัฐวิสาหกิจ(ตรวจสุขภาพ)">เบิกได้รัฐวิสาหกิจ(ตรวจสุขภาพ)</option>
+                    <option value="เบิกจ่ายตรงข้าราชการส่วนท้องถิ่น(ตรวจสุขภาพ)">เบิกจ่ายตรงข้าราชการส่วนท้องถิ่น(ตรวจสุขภาพ)</option>
+                    <option value="ประกันสังคม(ตรวจสุขภาพ)">ประกันสังคม(ตรวจสุขภาพ)</option>
+                    <option value="ชำระเงินเอง">ชำระเงินเอง</option>
+                </select>
+                <div class="note-box" id="privilegeNote" style="margin-top: 10px;">
+                    ⚠️ หมายเหตุ: สิทธิของครอบครัว ไม่สามารถใช้ในการตรวจสุขภาพได้
+                </div>
+            </div>
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="agree" required>
+                <label for="agree">ข้าพเจ้ายอมรับและยืนยันว่าข้อมูลของข้าพเจ้าถูกต้อง</label>
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="validateAndGoStep2()">ถัดไป</button>
+        </form>
+    </div>
+
+    <!-- Step 2: เลือกวันที่ต้องการเข้ารับบริการ -->
+    <div class="step-content" id="step2">
+        <h2>เลือกวันที่ต้องการเข้ารับบริการ</h2>
+        <p class="subtitle">เลือกเดือนและปี หรือคลิกวันที่ต้องการจอง</p>
+
+        <div class="calendar-box">
+            <div class="calendar-header">
+                <button type="button" onclick="changeCalendarMonth(-1)">‹</button>
+                <div style="display: flex; gap: 4px; flex: 1;">
+                    <select id="calMonthSelect" onchange="onCalMonthYearChange()"></select>
+                    <select id="calYearSelect" onchange="onCalMonthYearChange()"></select>
+                </div>
+                <button type="button" onclick="changeCalendarMonth(1)">›</button>
+            </div>
+            <div class="calendar-grid">
+                <div class="calendar-day-name">อา</div>
+                <div class="calendar-day-name">จ</div>
+                <div class="calendar-day-name">อ</div>
+                <div class="calendar-day-name">พ</div>
+                <div class="calendar-day-name">พฤ</div>
+                <div class="calendar-day-name">ศ</div>
+                <div class="calendar-day-name">ส</div>
+            </div>
+            <div id="calendarDays" class="calendar-grid" style="margin-top: 8px;"></div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item"><div class="dot" style="background:var(--primary)"></div>เปิดจอง</div>
+            <div class="legend-item"><div class="dot" style="background:var(--danger)"></div>เต็มแล้ว</div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-row">
+                <label for="filterMonthDisplay">📅 เดือน:</label>
+                <input type="text" id="filterMonthDisplay" readonly style="cursor: default;">
+            </div>
+            <div class="filter-row">
+                <label for="filterYearDisplay">📆 ปี:</label>
+                <input type="text" id="filterYearDisplay" readonly style="cursor: default;">
+            </div>
+        </div>
+
+        <div class="date-status-list" id="dateStatusList"></div>
+
+        <div class="btn-container">
+            <button type="button" class="btn btn-secondary" onclick="goToStep(1)">ย้อนกลับ</button>
+            <button type="button" class="btn btn-primary" onclick="validateAndGoStep3()">ถัดไป</button>
+        </div>
+    </div>
+
+    <!-- Step 3: ตรวจสอบข้อมูลการจอง -->
+    <div class="step-content" id="step3">
+        <h2>ตรวจสอบข้อมูลการจอง</h2>
+        <p class="subtitle">โปรดตรวจสอบข้อมูลก่อนกดปุ่มยืนยัน</p>
+
+        <div class="summary-card">
+            <div class="summary-item"><span>ประเภทการตรวจ</span><span id="sumExamType">-</span></div>
+            <div class="summary-item" id="sumCompanyRow" style="display: none;"><span>ชื่อหน่วยงาน</span><span id="sumCompany">-</span></div>
+            <div class="summary-item" id="sumDepartmentRow" style="display: none;"><span>แผนก</span><span id="sumDepartment">-</span></div>
+            <div class="summary-item"><span>วันที่เข้ารับบริการ</span><span id="sumDate">-</span></div>
+            <div class="summary-item"><span>เวลาเข้ารับบริการ</span><span id="sumTime">-</span></div>
+            <div class="summary-item"><span>ชื่อ-สกุล</span><span id="sumName">-</span></div>
+            <div class="summary-item"><span>เลขบัตรประชาชน</span><span id="sumIdCard">-</span></div>
+            <div class="summary-item"><span>เบอร์โทรศัพท์</span><span id="sumPhone">-</span></div>
+            <div class="summary-item"><span>สิทธิ</span><span id="sumPrivilege">-</span></div>
+        </div>
+
+        <div class="note-box">
+            ℹ️ หมายเหตุ: กรุณามาตรงเวลา และนำบัตรประจำตัวประชาชนมาด้วย
+        </div>
+
+        <div class="btn-container">
+            <button type="button" class="btn btn-secondary" onclick="goToStep(2)">แก้ไขข้อมูล / เปลี่ยนวัน</button>
+            <button type="button" class="btn btn-primary" id="confirmBtn" onclick="submitBooking()">ยืนยันการจอง</button>
+        </div>
+    </div>
+
+    <!-- Step 4: Success -->
+    <div class="step-content" id="stepSuccess">
+        <div class="success-box">
+            <div class="success-icon">✓</div>
+            <h2>จองคิวสำเร็จ</h2>
+            
+            <div class="summary-card" style="text-align: left; margin-top: 16px;">
+                <div class="summary-item"><span>ประเภทการตรวจ</span><span id="resExamType">-</span></div>
+                <div class="summary-item" id="resCompanyRow" style="display: none;"><span>ชื่อหน่วยงาน</span><span id="resCompany">-</span></div>
+                <div class="summary-item" id="resDepartmentRow" style="display: none;"><span>แผนก</span><span id="resDepartment">-</span></div>
+                <div class="summary-item"><span>วันที่เข้ารับบริการ</span><span id="resDateText">-</span></div>
+                <div class="summary-item"><span>เวลา</span><span id="resTimeText">-</span></div>
+                <div class="summary-item"><span>ชื่อ-สกุล</span><span id="resName">-</span></div>
+                <div class="summary-item"><span>เบอร์โทรศัพท์</span><span id="resPhone">-</span></div>
+                <div class="summary-item"><span>สถานที่</span><span>ตึกผู้ป่วยนอก OPD ชั้น 3 ห้อง 301</span></div>
+            </div>
+
+            <div style="font-size: 14px; color: var(--text-main); margin-bottom: 20px; text-align: center; background: var(--primary-light); padding: 14px; border-radius: 12px; border: 1px dashed var(--primary);">
+                ติดต่อสอบถามเพิ่มเติมได้ที่เบอร์โทรศัพท์<br>
+                <a href="tel:0623107162" id="resPhoneLink" style="font-size: 20px; font-weight: 700; color: var(--primary); text-decoration: none; display: inline-block; margin-top: 4px;">062-310-7162</a>
+            </div>
+
+            <button type="button" class="btn btn-primary" style="width: 100%;" onclick="window.location.reload()">กลับสู่หน้าหลัก</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwwa0dzXHqrsAZZTug0hZO5bHA_rLEnxSLTnLxgppWBqvDOfkoX9CzpYXfQRHNbGo4j/exec";
+    let selectedExamType = "ตรวจสุขภาพประจำปี";
+    let companyName = "";
+    let departmentName = "";
+    let availableDatesData = {};
+    let selectedDateVal = "";
+    let selectedTimeVal = "08.00 - 09.00 น.";
+    let today = new Date();
+    let currentMonth = today.getMonth();
+    let currentYear = today.getFullYear();
+    let fetchedDataList = [];
+
+    const monthsThai = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+
+    window.onload = async function() {
+        initDropdowns();
+        try {
+            await liff.init({ liffId: "YOUR_LIFF_ID" });
+            if (!liff.isLoggedIn()) liff.login();
+        } catch (e) { console.log(e); }
+    };
+
+    function chooseExamType(type) {
+        selectedExamType = type;
+        document.getElementById('displayMainTitle').textContent = type;
+        document.getElementById('selectTypeModal').style.display = 'none';
+
+        const privilegeSelect = document.getElementById('privilege');
+        const privilegeNote = document.getElementById('privilegeNote');
+
+        if (type === 'ตรวจสุขภาพก่อนเข้าทำงาน') {
+            // เปิด popup กรอกชื่อหน่วยงานและแผนก
+            document.getElementById('companyModal').style.display = 'flex';
+        } else {
+            privilegeSelect.innerHTML = `
+                <option value="">กรุณาเลือกสิทธิ์</option>
+                <option value="เบิกหน่วยงานต้นสังกัด(ตรวจสุขภาพ)">เบิกหน่วยงานต้นสังกัด(ตรวจสุขภาพ)</option>
+                <option value="เบิกได้รัฐวิสาหกิจ(ตรวจสุขภาพ)">เบิกได้รัฐวิสาหกิจ(ตรวจสุขภาพ)</option>
+                <option value="เบิกจ่ายตรงข้าราชการส่วนท้องถิ่น(ตรวจสุขภาพ)">เบิกจ่ายตรงข้าราชการส่วนท้องถิ่น(ตรวจสุขภาพ)</option>
+                <option value="ประกันสังคม(ตรวจสุขภาพ)">ประกันสังคม(ตรวจสุขภาพ)</option>
+                <option value="ชำระเงินเอง">ชำระเงินเอง</option>
+            `;
+            privilegeNote.innerHTML = '⚠️ หมายเหตุ: สิทธิของครอบครัว ไม่สามารถใช้ในการตรวจสุขภาพได้';
+            privilegeNote.style.display = 'block';
+
+            document.getElementById('pdpaModal').style.display = 'flex';
+            checkInitialScroll();
+            fetchAvailableDates();
+        }
+    }
+
+    function submitCompanyInfo() {
+        companyName = document.getElementById('inputCompany').value.trim();
+        departmentName = document.getElementById('inputDepartment').value.trim();
+
+        if (!companyName || !departmentName) {
+            alert("กรุณากรอกชื่อหน่วยงานและแผนกให้ครบถ้วน");
+            return;
+        }
+
+        const privilegeSelect = document.getElementById('privilege');
+        const privilegeNote = document.getElementById('privilegeNote');
+
+        privilegeSelect.innerHTML = '<option value="ชำระเงินเอง" selected>ชำระเงินเอง</option>';
+        privilegeNote.innerHTML = '⚠️ หมายเหตุ: ตรวจสุขภาพก่อนเข้าทำงาน จะเป็นสิทธิชำระเงินเอง';
+        privilegeNote.style.display = 'block';
+
+        // แสดงช่องหน่วยงาน/แผนกในฟอร์ม Step 1
+        document.getElementById('displayCompany').value = companyName;
+        document.getElementById('displayDepartment').value = departmentName;
+        document.getElementById('companyGroup').style.display = 'block';
+        document.getElementById('departmentGroup').style.display = 'block';
+
+        document.getElementById('companyModal').style.display = 'none';
+        document.getElementById('pdpaModal').style.display = 'flex';
+        checkInitialScroll();
+
+        fetchAvailableDates();
+    }
+
+    function checkInitialScroll() {
+        const el = document.getElementById('pdpaBody');
+        if (el.scrollHeight <= el.clientHeight) {
+            enablePdpaCheckbox();
+        }
+    }
+
+    function checkScrollBottom() {
+        const el = document.getElementById('pdpaBody');
+        if (el.scrollHeight - el.scrollTop - el.clientHeight < 10) {
+            enablePdpaCheckbox();
+        }
+    }
+
+    function enablePdpaCheckbox() {
+        const checkbox = document.getElementById('pdpaCheckbox');
+        const label = document.getElementById('checkboxLabel');
+        const hint = document.getElementById('scrollHint');
+        
+        checkbox.disabled = false;
+        checkbox.style.cursor = 'pointer';
+        label.style.cursor = 'pointer';
+        label.style.color = 'var(--text-main)';
+        hint.style.display = 'none';
+    }
+
+    function togglePdpaBtn() {
+        const checkbox = document.getElementById('pdpaCheckbox');
+        const btn = document.getElementById('pdpaBtn');
+        btn.disabled = !checkbox.checked;
+    }
+
+    function closePdpaModal() {
+        document.getElementById('pdpaModal').style.display = 'none';
+    }
+
+    function closeDuplicateModal() {
+        document.getElementById('duplicateModal').style.display = 'none';
+    }
+
+    async function checkIdCardInput(el) {
+        el.value = el.value.replace(/[^0-9]/g, '');
+        
+        if (el.value.length === 13) {
+            let allSame = true;
+            for (let i = 1; i < 13; i++) {
+                if (el.value[i] !== el.value[0]) {
+                    allSame = false;
+                    break;
+                }
+            }
+
+            if (allSame) {
+                document.getElementById('duplicateTitle').textContent = "เลขบัตรประจำตัวประชาชนไม่ถูกต้อง";
+                document.getElementById('duplicateDesc').innerHTML = `กรุณากรอกเลขบัตรประจำตัวประชาชน<br>ให้ถูกต้องตามความเป็นจริง`;
+                document.getElementById('duplicateModal').style.display = 'flex';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${WEB_APP_URL}?action=checkDuplicate&idcard=${el.value}`);
+                const result = await res.json();
+                if (result.duplicate) {
+                    document.getElementById('duplicateTitle').textContent = "คุณได้ทำการจองคิวแล้ว";
+                    document.getElementById('duplicateDesc').innerHTML = `หากต้องการแก้ไข กรุณาติดต่อเจ้าหน้าที่<br>ทางไลน์ <strong style="color: var(--primary);">@813chbxc</strong> หรือ เบอร์โทรศัพท์ <strong style="color: var(--primary);">062-310-7162</strong> (ติดต่อในเวลาราชการ)`;
+                    document.getElementById('duplicateModal').style.display = 'flex';
+                }
+            } catch (e) {
+                console.log("Error checking duplicate:", e);
+            }
+        }
+    }
+
+    function checkPhoneInput(el) {
+        el.value = el.value.replace(/[^0-9]/g, '');
+        if (el.value.length > 10) {
+            el.value = el.value.slice(0, 10);
+        }
+    }
+
+    function initDropdowns(yearsList = []) {
+        let defaultYear = new Date().getFullYear();
+        let yearsSet = new Set([defaultYear, defaultYear + 1]);
+        yearsList.forEach(y => { if(y) yearsSet.add(parseInt(y)); });
+        let sortedYears = Array.from(yearsSet).sort((a, b) => a - b);
+
+        const calYearSelect = document.getElementById('calYearSelect');
+        let currentSelectedYear = calYearSelect.value ? parseInt(calYearSelect.value) : currentYear;
+        calYearSelect.innerHTML = '';
+        sortedYears.forEach(y => {
+            let opt = document.createElement('option');
+            opt.value = y;
+            opt.textContent = `พ.ศ. ${y + 543} (ค.ศ. ${y})`;
+            if(y === currentSelectedYear) opt.selected = true;
+            calYearSelect.appendChild(opt);
+        });
+
+        const calMonthSelect = document.getElementById('calMonthSelect');
+        calMonthSelect.innerHTML = '';
+        monthsThai.forEach((m, index) => {
+            let opt = document.createElement('option');
+            opt.value = index;
+            opt.textContent = m;
+            if(index === currentMonth) opt.selected = true;
+            calMonthSelect.appendChild(opt);
+        });
+
+        updateFilterDisplays();
+    }
+
+    function updateFilterDisplays() {
+        document.getElementById('filterMonthDisplay').value = monthsThai[currentMonth];
+        document.getElementById('filterYearDisplay').value = `พ.ศ. ${currentYear + 543} (ค.ศ. ${currentYear})`;
+    }
+
+    async function fetchAvailableDates() {
+        try {
+            const res = await fetch(`${WEB_APP_URL}?action=getDates&examType=${encodeURIComponent(selectedExamType)}`);
+            fetchedDataList = await res.json();
+            
+            availableDatesData = {};
+            let yearsFromData = [];
+            fetchedDataList.forEach(item => {
+                availableDatesData[item.date] = item;
+                let y = item.date.split('-')[0];
+                if(y) yearsFromData.push(parseInt(y));
+            });
+
+            initDropdowns(yearsFromData);
+            renderCalendar(currentMonth, currentYear);
+            renderDateStatusList(fetchedDataList);
+        } catch(e) {
+            console.log("Error fetching dates:", e);
+        }
+    }
+
+    function renderCalendar(month, year) {
+        const calendarDays = document.getElementById('calendarDays');
+        calendarDays.innerHTML = '';
+        
+        document.getElementById('calMonthSelect').value = month;
+        document.getElementById('calYearSelect').value = year;
+
+        updateFilterDisplays();
+
+        const firstDayIndex = new Date(year, month, 1).getDay();
+        const totalDays = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDayIndex; i++) calendarDays.appendChild(document.createElement('div'));
+
+        for (let day = 1; day <= totalDays; day++) {
+            let dayStr = String(day).padStart(2, '0');
+            let monthStr = String(month + 1).padStart(2, '0');
+            let dateKey = `${year}-${monthStr}-${dayStr}`;
+
+            let dayDiv = document.createElement('div');
+            dayDiv.classList.add('calendar-date');
+            dayDiv.textContent = day;
+
+            let slotInfo = availableDatesData[dateKey];
+            if (slotInfo && slotInfo.status === 'open' && slotInfo.remaining > 0) {
+                dayDiv.classList.add('available');
+                if (slotInfo.remaining <= 5) {
+                    dayDiv.classList.add('warning-date');
+                }
+                if (selectedDateVal === dateKey) dayDiv.classList.add('selected');
+                dayDiv.onclick = () => {
+                    document.querySelectorAll('.calendar-date').forEach(d => d.classList.remove('selected'));
+                    dayDiv.classList.add('selected');
+                    selectedDateVal = dateKey;
+                    selectedTimeVal = slotInfo.time || "08.00 - 09.00 น.";
+                    renderDateStatusList(fetchedDataList, true);
+                };
+            } else if (slotInfo && (slotInfo.status === 'full' || slotInfo.remaining <= 0)) {
+                dayDiv.classList.add('full');
+            }
+            calendarDays.appendChild(dayDiv);
+        }
+    }
+
+    function onCalMonthYearChange() {
+        currentMonth = parseInt(document.getElementById('calMonthSelect').value);
+        currentYear = parseInt(document.getElementById('calYearSelect').value);
+        renderCalendar(currentMonth, currentYear);
+        renderDateStatusList(fetchedDataList);
+    }
+
+    function renderDateStatusList(data, scrollToTop = false) {
+        const list = document.getElementById('dateStatusList');
+        
+        let matchedItems = [];
+        let otherItems = [];
+
+        const targetMonthStr = String(currentMonth + 1).padStart(2, '0');
+        const targetYearStr = String(currentYear);
+
+        data.forEach(item => {
+            if (!(item.status === 'open' && item.remaining > 0)) return;
+
+            let parts = item.date.split('-');
+            let itemYear = parts[0];
+            let itemMonth = parts[1];
+
+            if (itemMonth !== targetMonthStr || itemYear !== targetYearStr) return;
+
+            if (selectedDateVal && item.date === selectedDateVal) {
+                matchedItems.push(item);
+            } else {
+                otherItems.push(item);
+            }
+        });
+
+        let sortedData = [...matchedItems, ...otherItems];
+        list.innerHTML = '';
+
+        sortedData.forEach(item => {
+            let statusText = `<span style="color:var(--primary); font-weight:600;">● เปิดจอง</span> เหลือ ${item.remaining} คิว`;
+            
+            let parts = item.date.split('-');
+            let thaiYear = parseInt(parts[0]) + 543;
+            let formattedDate = `${parts[2]}-${parts[1]}-${thaiYear}`;
+
+            let div = document.createElement('div');
+            div.className = 'date-status-card';
+            if (selectedDateVal === item.date) {
+                div.classList.add('highlighted');
+            }
+            div.innerHTML = `<span>วันที่ ${formattedDate}</span> <span>${statusText}</span>`;
+
+            list.appendChild(div);
+        });
+
+        if (scrollToTop) {
+            setTimeout(() => {
+                list.scrollTop = 0;
+            }, 50);
+        }
+    }
+
+    function changeCalendarMonth(dir) {
+        currentMonth += dir;
+        if (currentMonth > 11) { 
+            currentMonth = 0; 
+            currentYear++; 
+        } else if (currentMonth < 0) { 
+            currentMonth = 11; 
+            currentYear--; 
+        }
+        renderCalendar(currentMonth, currentYear);
+        renderDateStatusList(fetchedDataList);
+    }
+
+    function validateAndGoStep2() {
+        const prefix = document.querySelector('input[name="prefix"]:checked');
+        const fullname = document.getElementById('fullname').value.trim();
+        const idcard = document.getElementById('idcard').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const privilege = document.getElementById('privilege').value;
+        const agree = document.getElementById('agree').checked;
+
+        if(!prefix || !fullname || !idcard || !phone || !privilege || !agree) {
+            alert("กรุณากรอกข้อมูลและกดยอมรับเงื่อนไขให้ครบถ้วน");
+            return;
+        }
+
+        if(idcard.length !== 13) {
+            alert("กรุณากรอกเลขบัตรประจำตัวประชาชนให้ครบ 13 หลัก");
+            document.getElementById('idcard').focus();
+            return;
+        }
+
+        if(phone.length !== 10) {
+            alert("กรุณากรอกเบอร์โทรศัพท์มือถือให้ครบ 10 หลัก");
+            document.getElementById('phone').focus();
+            return;
+        }
+
+        goToStep(2);
+    }
+
+    function validateAndGoStep3() {
+        if(!selectedDateVal) {
+            alert("กรุณาเลือกวันที่ต้องการจองก่อนครับ");
+            return;
+        }
+
+        const prefix = document.querySelector('input[name="prefix"]:checked');
+        const fullname = document.getElementById('fullname').value.trim();
+        const idcard = document.getElementById('idcard').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        const privilege = document.getElementById('privilege').value;
+
+        let parts = selectedDateVal.split('-');
+        let thaiYear = parseInt(parts[0]) + 543;
+        let formattedDate = `${parts[2]}-${parts[1]}-${thaiYear}`;
+
+        document.getElementById('sumExamType').textContent = selectedExamType;
+        
+        if (selectedExamType === 'ตรวจสุขภาพก่อนเข้าทำงาน') {
+            document.getElementById('sumCompany').textContent = companyName;
+            document.getElementById('sumDepartment').textContent = departmentName;
+            document.getElementById('sumCompanyRow').style.display = 'flex';
+            document.getElementById('sumDepartmentRow').style.display = 'flex';
+        }
+
+        document.getElementById('sumDate').textContent = formattedDate;
+        document.getElementById('sumTime').textContent = selectedTimeVal;
+        document.getElementById('sumName').textContent = `${prefix.value} ${fullname}`;
+        document.getElementById('sumIdCard').textContent = idcard;
+        document.getElementById('sumPhone').textContent = phone;
+        document.getElementById('sumPrivilege').textContent = privilege;
+
+        goToStep(3);
+    }
+
+    function goToStep(step) {
+        document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step${step}`).classList.add('active');
+        
+        for(let i=1; i<=3; i++) {
+            let ind = document.getElementById(`stepIndicator${i}`);
+            ind.classList.remove('active', 'completed');
+            if(i < step) ind.classList.add('completed');
+            if(i === step) ind.classList.add('active');
+        }
+    }
+
+    async function submitBooking() {
+        const btn = document.getElementById('confirmBtn');
+        btn.textContent = "กำลังบันทึก...";
+        btn.disabled = true;
+
+        const payload = {
+            action: "book",
+            examType: selectedExamType,
+            company: companyName,
+            department: departmentName,
+            prefix: document.querySelector('input[name="prefix"]:checked').value,
+            fullname: document.getElementById('fullname').value,
+            idcard: document.getElementById('idcard').value,
+            phone: document.getElementById('phone').value,
+            privilege: document.getElementById('privilege').value,
+            date: selectedDateVal,
+            time: selectedTimeVal
+        };
+
+        let parts = selectedDateVal.split('-');
+        let thaiYear = parseInt(parts[0]) + 543;
+        let formattedDate = `${parts[2]}-${parts[1]}-${thaiYear}`;
+
+        try {
+            const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await res.json();
+            
+            if(result.success) {
+                document.getElementById('resExamType').textContent = selectedExamType;
+                if (selectedExamType === 'ตรวจสุขภาพก่อนเข้าทำงาน') {
+                    document.getElementById('resCompany').textContent = companyName;
+                    document.getElementById('resDepartment').textContent = departmentName;
+                    document.getElementById('resCompanyRow').style.display = 'flex';
+                    document.getElementById('resDepartmentRow').style.display = 'flex';
+                }
+                document.getElementById('resDateText').textContent = formattedDate;
+                document.getElementById('resTimeText').textContent = selectedTimeVal;
+                document.getElementById('resName').textContent = `${payload.prefix} ${payload.fullname}`;
+                document.getElementById('resPhone').textContent = payload.phone;
+                
+                document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+                document.getElementById('stepSuccess').classList.add('active');
+                document.querySelector('.stepper').style.display = 'none';
+            } else {
+                alert(result.message);
+                btn.textContent = "ยืนยันการจองคิว";
+                btn.disabled = false;
+            }
+        } catch(e) {
+            document.getElementById('resExamType').textContent = selectedExamType;
+            if (selectedExamType === 'ตรวจสุขภาพก่อนเข้าทำงาน') {
+                document.getElementById('resCompany').textContent = companyName;
+                document.getElementById('resDepartment').textContent = departmentName;
+                document.getElementById('resCompanyRow').style.display = 'flex';
+                document.getElementById('resDepartmentRow').style.display = 'flex';
+            }
+            document.getElementById('resDateText').textContent = formattedDate;
+            document.getElementById('resTimeText').textContent = selectedTimeVal;
+            document.getElementById('resName').textContent = `${payload.prefix} ${payload.fullname}`;
+            document.getElementById('resPhone').textContent = payload.phone;
+            
+            document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('stepSuccess').classList.add('active');
+            document.querySelector('.stepper').style.display = 'none';
+        }
+    }
+</script>
+</body>
+</html>
