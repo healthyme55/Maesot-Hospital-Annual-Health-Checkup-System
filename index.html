@@ -457,14 +457,14 @@
     </div>
 </div>
 
-<!-- Popup กรอกชื่อหน่วยงานและแผนก (สำหรับตรวจสุขภาพก่อนเข้าทำงาน) -->
+<!-- Popup กรอกชื่อหน่วยงานและกลุ่มงาน/แผนก (สำหรับตรวจสุขภาพก่อนเข้าทำงาน) -->
 <div class="modal-overlay" id="companyModal" style="display: none;">
     <div class="modal-card" style="text-align: left;">
         <div class="modal-header" style="text-align: center;">
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#0d9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
             <h3>ข้อมูลหน่วยงาน / สถานประกอบการ</h3>
         </div>
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px; text-align: center;">กรุณากรอกชื่อหน่วยงานและแผนกของท่าน</p>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px; text-align: center;">กรุณากรอกชื่อหน่วยงานและกลุ่มงาน/แผนกของท่าน</p>
         
         <div class="form-group">
             <label>ชื่อหน่วยงาน / บริษัท *</label>
@@ -472,8 +472,8 @@
         </div>
         
         <div class="form-group">
-            <label>แผนก *</label>
-            <input type="text" id="inputDepartment" placeholder="เช่น แผนกผลิต, แผนกบัญชี" required>
+            <label>กลุ่มงาน/แผนก *</label>
+            <input type="text" id="inputDepartment" placeholder="เช่น แผนกผลิต, กลุ่มงานบัญชี" required>
         </div>
 
         <button type="button" class="btn btn-primary" onclick="submitCompanyInfo()" style="margin-top: 8px;">ถัดไป</button>
@@ -559,7 +559,7 @@
             </div>
 
             <div class="form-group" id="departmentGroup" style="display: none;">
-                <label>แผนก</label>
+                <label>กลุ่มงาน/แผนก</label>
                 <input type="text" id="displayDepartment" readonly style="background: #f1f5f9; cursor: default;">
             </div>
 
@@ -672,7 +672,7 @@
         <div class="summary-card">
             <div class="summary-item"><span>ประเภทการตรวจ</span><span id="sumExamType">-</span></div>
             <div class="summary-item" id="sumCompanyRow" style="display: none;"><span>ชื่อหน่วยงาน</span><span id="sumCompany">-</span></div>
-            <div class="summary-item" id="sumDepartmentRow" style="display: none;"><span>แผนก</span><span id="sumDepartment">-</span></div>
+            <div class="summary-item" id="sumDepartmentRow" style="display: none;"><span>กลุ่มงาน/แผนก</span><span id="sumDepartment">-</span></div>
             <div class="summary-item"><span>วันที่เข้ารับบริการ</span><span id="sumDate">-</span></div>
             <div class="summary-item"><span>เวลาเข้ารับบริการ</span><span id="sumTime">-</span></div>
             <div class="summary-item"><span>ชื่อ-สกุล</span><span id="sumName">-</span></div>
@@ -700,7 +700,7 @@
             <div class="summary-card" style="text-align: left; margin-top: 16px;">
                 <div class="summary-item"><span>ประเภทการตรวจ</span><span id="resExamType">-</span></div>
                 <div class="summary-item" id="resCompanyRow" style="display: none;"><span>ชื่อหน่วยงาน</span><span id="resCompany">-</span></div>
-                <div class="summary-item" id="resDepartmentRow" style="display: none;"><span>แผนก</span><span id="resDepartment">-</span></div>
+                <div class="summary-item" id="resDepartmentRow" style="display: none;"><span>กลุ่มงาน/แผนก</span><span id="resDepartment">-</span></div>
                 <div class="summary-item"><span>วันที่เข้ารับบริการ</span><span id="resDateText">-</span></div>
                 <div class="summary-item"><span>เวลา</span><span id="resTimeText">-</span></div>
                 <div class="summary-item"><span>ชื่อ-สกุล</span><span id="resName">-</span></div>
@@ -775,7 +775,7 @@
         departmentName = document.getElementById('inputDepartment').value.trim();
 
         if (!companyName || !departmentName) {
-            alert("กรุณากรอกชื่อหน่วยงานและแผนกให้ครบถ้วน");
+            alert("กรุณากรอกชื่อหน่วยงานและกลุ่มงาน/แผนกให้ครบถ้วน");
             return;
         }
 
