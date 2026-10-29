@@ -1131,11 +1131,15 @@
         btn.textContent = "กำลังบันทึก...";
         btn.disabled = true;
 
+        // ดึงค่าชื่อหน่วยงานและแผนกจากช่องแสดงผล (กรณีตรวจก่อนเข้าทำงาน)
+        const compVal = document.getElementById('displayCompany') ? document.getElementById('displayCompany').value : "-";
+        const deptVal = document.getElementById('displayDepartment') ? document.getElementById('displayDepartment').value : "-";
+
         const payload = {
             action: "book",
             examType: selectedExamType,
-            company: companyName,
-            department: departmentName,
+            company: compVal || companyName || "-",
+            department: deptVal || departmentName || "-",
             prefix: document.querySelector('input[name="prefix"]:checked').value,
             fullname: document.getElementById('fullname').value,
             idcard: document.getElementById('idcard').value,
@@ -1156,8 +1160,8 @@
             if(result.success) {
                 document.getElementById('resExamType').textContent = selectedExamType;
                 if (selectedExamType === 'ตรวจสุขภาพก่อนเข้าทำงาน') {
-                    document.getElementById('resCompany').textContent = companyName;
-                    document.getElementById('resDepartment').textContent = departmentName;
+                    document.getElementById('resCompany').textContent = payload.company;
+                    document.getElementById('resDepartment').textContent = payload.department;
                     document.getElementById('resCompanyRow').style.display = 'flex';
                     document.getElementById('resDepartmentRow').style.display = 'flex';
                 }
@@ -1177,8 +1181,8 @@
         } catch(e) {
             document.getElementById('resExamType').textContent = selectedExamType;
             if (selectedExamType === 'ตรวจสุขภาพก่อนเข้าทำงาน') {
-                document.getElementById('resCompany').textContent = companyName;
-                document.getElementById('resDepartment').textContent = departmentName;
+                document.getElementById('resCompany').textContent = payload.company;
+                document.getElementById('resDepartment').textContent = payload.department;
                 document.getElementById('resCompanyRow').style.display = 'flex';
                 document.getElementById('resDepartmentRow').style.display = 'flex';
             }
